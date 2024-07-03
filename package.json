@@ -1,0 +1,14 @@
+{
+  "name": "hkda-contracts",
+  "version": "1.0.0",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "hardhat": "^2.22.4"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.8.3",
+    "@openzeppelin/contracts-upgradeable": "^4.8.3",
+    "dotenv": "^16.4.5"
+  }
+}
