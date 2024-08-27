@@ -1,7 +1,12 @@
 {
-  "name": "hkda-contracts",
+  "name": "ida-contracts",
   "version": "1.0.0",
-  "license": "UNLICENSED",
+  "description": "To make it easy for you to get started with GitLab, here's a list of recommended next steps.",
+  "repository": {
+    "type": "git",
+    "url": "http://gitlab.bsnbase.com:8088/ida-stablecoin/source-code/contract/ida-contracts"
+  },
+  "license": "MIT",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^5.0.0",
     "hardhat": "^2.22.4"
