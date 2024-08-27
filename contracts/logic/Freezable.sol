@@ -1,22 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./Permissions.sol";
-
-abstract contract Freezable is Permissions {
+abstract contract Freezable {
     mapping(address => bool) internal _frozenList;
 
     event Freeze(address indexed _account);
     event UnFreeze(address indexed _account);
-
-    /**
-     * @dev Throws if argument account is frozen.
-     * @param _account The address to check.
-     */
-    modifier unFrozen(address _account) {
-        require(!_isFrozen(_account), "Freezable: account is frozen");
-        _;
-    }
 
     /**
      * @notice Checks if account is frozen.
@@ -30,19 +19,31 @@ abstract contract Freezable is Permissions {
     }
 
     /**
+     * @dev Permission control must be implemented in the final contract.
      * @notice Adds account to frozen list.
      * @param _account The address to frozen list.
      */
-    function freeze(address _account) external virtual whenNotPaused OnlyCompliance {
+    function freeze(address _account) external virtual ;
+
+    /**
+     * @dev Helper methods for freeze.
+     */
+    function _freeze(address _account) internal virtual {
         _frozenList[_account] = true;
         emit Freeze(_account);
     }
 
     /**
+     * @dev Permission control must be implemented in the final contract.
      * @notice Removes account from frozen list.
      * @param _account The address to remove from the frozen list.
      */
-    function unFreeze(address _account) external virtual whenNotPaused OnlyCompliance {
+    function unFreeze(address _account) external virtual ;
+
+    /**
+     * @dev Helper methods for unFreeze.
+     */
+    function _unFreeze(address _account) internal virtual {
         _frozenList[_account] = false;
         emit UnFreeze(_account);
     }

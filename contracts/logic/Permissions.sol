@@ -32,14 +32,6 @@ abstract contract Permissions is Pausable {
         _;
     }
 
-    modifier OnlyComplianceOrOperator() {
-        require(
-            _msgSender() == _compliance || _msgSender() == _operator,
-            "Permissions: Only compliance team or operator team call this method"
-        );
-        _;
-    }
-
     /**
      * @notice Updates the compliance address.
      * @param _newAddress The address of the new compliance.

@@ -22,24 +22,26 @@ abstract contract Pausable is Context {
 
     /**
      * @dev Permission control must be implemented in the final contract.
+     * @notice called by the owner to pause, triggers stopped state.
      */
-    function pause() public virtual;
+    function pause() external virtual;
 
     /**
      * @dev Permission control must be implemented in the final contract.
+     * @notice called by the owner to unpause, triggers stopped state.
      */
-    function unpause() public virtual;
+    function unpause() external virtual;
 
     /**
-     * @dev called by the owner to pause, triggers stopped state
+     * @dev Helper methods for pause.
      */
     function _pause() internal virtual {
         _paused = true;
         emit Pause();
     }
 
-    /**
-     * @dev called by the owner to unpause, returns to normal state
+   /**
+     * @dev Helper methods for unpause.
      */
     function _unpause() internal virtual {
         _paused = false;

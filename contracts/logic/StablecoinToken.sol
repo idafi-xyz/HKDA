@@ -8,13 +8,15 @@ import "./Freezable.sol";
 import "./Pausable.sol";
 import "./Rescuable.sol";
 import "./NativeCurrencyPaymentFallback.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 /**
  * @title StablecoinToken
  */
-contract StablecoinToken is
+contract StablecoinToken is Initializable,
     NativeCurrencyPaymentFallback,
     AbstractStablecoinTokenV1,
+    Pausable,
     Permissions,
     Whitelistable,
     Freezable,
@@ -32,7 +34,7 @@ contract StablecoinToken is
     string private _currency;
     uint8 private _decimals;
 
-    bool internal initialized;
+    //bool internal initialized;
 
     address internal _burnAccount;
 
@@ -46,6 +48,21 @@ contract StablecoinToken is
         uint256 value
     );
 
+    constructor() {
+        _disableInitializers();
+    }
+
+    modifier checkAccount(address _account) {
+        if (_account != _burnAccount) {
+            require(!_isFrozen(_account), "Freezable: account is frozen");
+            require(
+                !whitelistedStatus() || _isWhitelisted(_account),
+                "Whitelistable: account not is whitelisted"
+            );
+        }
+        _;
+    }
+
     function initialize(
         string memory tokenName,
         string memory tokenSymbol,
@@ -55,10 +72,15 @@ contract StablecoinToken is
         address newOperator,
         address newBurnAccount,
         bool whitelistStatus
-    ) public {
+    ) public initializer {
+        // require(
+        //     !initialized,
+        //     "StablecoinToken: contract is already initialized"
+        // );
+
         require(
-            !initialized,
-            "StablecoinToken: contract is already initialized"
+            newBurnAccount != address(0),
+            "StablecoinToken: burn account cannot be zero address"
         );
 
         _name = tokenName;
@@ -73,32 +95,123 @@ contract StablecoinToken is
         }
 
         _burnAccount = newBurnAccount;
-        initialized = true;
+        //initialized = true;
     }
 
     /**
-     * @dev Implementation of pause method for permission control
+     * @dev Implementation of pause method for permission control.
+     * @notice called by the owner to pause, triggers stopped state.
      */
-    function pause() public virtual override OnlyCompliance {
+    function pause() external virtual override OnlyCompliance {
         _pause();
     }
 
     /**
-     * @dev Implementation of unpause method for permission control
+     * @dev Implementation of unpause method for permission control.
+     * @notice called by the owner to unpause, triggers stopped state.
      */
-    function unpause() public virtual override OnlyCompliance {
+    function unpause() external virtual override OnlyCompliance {
         _unpause();
     }
 
-    modifier checkAccount(address _account) {
-        if (_account != _burnAccount) {
-            require(!_isFrozen(_account), "Freezable: account is frozen");
-            require(
-                !whitelistedStatus() || _isWhitelisted(_account),
-                "Whitelistable: account not is whitelisted"
-            );
-        }
-        _;
+    /**
+     * @dev Implementation of freeze method for permission control.
+     * @notice Adds account to frozen list.
+     * @param _account The address to frozen list.
+     */
+    function freeze(
+        address _account
+    ) external virtual override whenNotPaused OnlyCompliance {
+        _freeze(_account);
+    }
+
+    /**
+     * @dev Implementation of unFreeze method for permission control.
+     * @notice Removes account from frozen list.
+     * @param _account The address to remove from the frozen list.
+     */
+    function unFreeze(
+        address _account
+    ) external virtual override whenNotPaused OnlyCompliance {
+        _unFreeze(_account);
+    }
+
+    /**
+     * @dev Implementation of whitelist method for permission control.
+     * @notice Adds account to whitelist.
+     * @param _account The address to whitelist.
+     */
+    function whitelist(
+        address _account
+    ) external virtual override whenNotPaused OnlyCompliance {
+        _whitelist(_account);
+    }
+
+    /**
+     * @dev Implementation of unWhitelist method for permission control.
+     * @notice Removes account from whitelist.
+     * @param _account The address to remove from the whitelist.
+     */
+    function unWhitelist(
+        address _account
+    ) external virtual override whenNotPaused OnlyCompliance {
+        _unWhitelist(_account);
+    }
+
+    /**
+     * @dev Implementation of disableWhitelisted method for permission control.
+     * @notice Disable whitelist
+     */
+    function disableWhitelisted()
+        external
+        virtual
+        override
+        whenNotPaused
+        OnlyCompliance
+    {
+        _disableWhitelisted();
+    }
+
+    /**
+     * @dev Implementation of enableWhitelisted method for permission control.
+     * @notice Enable whitelist
+     */
+    function enableWhitelisted()
+        external
+        virtual
+        override
+        whenNotPaused
+        OnlyCompliance
+    {
+        _enableWhitelisted();
+    }
+
+    /**
+     * @dev Implementation of rescueNativeCurrency method for permission control.
+     * @notice Rescue Native Currency locked up in this contract.
+     * @param to Recipient address
+     * @param value value to withdraw
+     */
+    function rescueNativeCurrency(
+        address to,
+        uint256 value
+    ) external virtual override whenNotPaused OnlyCompliance {
+        _rescueNativeCurrency(to, value);
+    }
+
+    /**
+     * @dev Implementation of rescueERC20 method for permission control.
+     * @notice Rescue ERC20 tokens locked up in this contract.
+     * @param tokenContract ERC20 token contract address
+     * @param to Recipient address
+     * @param amount Amount to withdraw
+     */
+    function rescueERC20(
+        IERC20 tokenContract,
+        address to,
+        uint256 amount
+    ) external virtual override {
+        _rescueERC20(tokenContract, to, amount);
     }
 
     /**
@@ -421,10 +534,7 @@ contract StablecoinToken is
         uint256 amount
     ) internal virtual {
         require(from != address(0), "ERC20: transfer from the zero address");
-        require(
-            to == _burnAccount || to != address(0),
-            "ERC20: transfer to the zero address"
-        );
+        require(to != address(0), "ERC20: transfer to the zero address");
 
         _beforeTokenTransfer(from, to, amount);
 
@@ -488,7 +598,7 @@ contract StablecoinToken is
      */
     function _burn(address account, uint256 amount) internal virtual {
         require(
-            account == _burnAccount || account != address(0),
+            account != address(0),
             "ERC20: burn from the zero address"
         );
 
@@ -611,7 +721,7 @@ contract StablecoinToken is
     function updateBurnAccount(
         address _account
     ) external virtual whenNotPaused OnlyCompliance {
-        //require(_account != address(0), "StablecoinToken: burn account cannot be zero address");
+        require(_account != address(0), "StablecoinToken: burn account cannot be zero address");
         require(
             _balances[_account] == 0,
             "StablecoinToken: old burn account balance must be zero"
