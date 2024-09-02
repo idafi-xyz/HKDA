@@ -210,7 +210,7 @@ contract StablecoinToken is Initializable,
         IERC20 tokenContract,
         address to,
         uint256 amount
-    ) external virtual override {
+    ) external virtual override whenNotPaused OnlyCompliance {
         _rescueERC20(tokenContract, to, amount);
     }
 
@@ -236,7 +236,7 @@ contract StablecoinToken is Initializable,
      * @dev Helper methods for updates reserve balance.
      * @param newReserveBalance the new reserve balance must be greater than or equal to total supply.
      */
-    function _updateReserveBalance(uint256 newReserveBalance) internal {
+    function _updateReserveBalance(uint256 newReserveBalance) internal virtual {
         require(
             newReserveBalance >= _totalSupply,
             "StablecoinToken: must be greater than or equal to total supply"
