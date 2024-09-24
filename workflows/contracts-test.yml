@@ -1,0 +1,32 @@
+name: IDA Contracts with hardhat
+
+on:
+  push:
+    branches: [ "dev" ]
+  pull_request:
+    branches: [ "dev" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [ 20.x]
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Build
+      run: |
+        npm install
+        npm install --save-dev hardhat
+        
+        echo "copy env feile"
+        cp .env.example .env
+        
+        npx hardhat compile
+
+    - name: Test
+      run: |
+        npx hardhat test
